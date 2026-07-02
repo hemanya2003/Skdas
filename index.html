@@ -1,28 +1,31 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+
 <meta charset="utf-8">
-<title>SK DAS Area Map</title>
+<meta name="viewport" content="width=device-width,initial-scale=1">
 
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SK DAS AREA MAP</title>
 
-<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+<link rel="stylesheet"
+href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
 
 <style>
+
 html,body{
-    margin:0;
-    padding:0;
-    height:100%;
+height:100%;
+margin:0;
 }
 
 #map{
-    width:100%;
-    height:100%;
+width:100%;
+height:100%;
 }
 
 .leaflet-popup-content{
-    font-size:15px;
+font-size:15px;
 }
+
 </style>
 
 </head>
@@ -36,81 +39,123 @@ html,body{
 
 <script>
 
-//---------------------------
-// Create Map
-//---------------------------
+//-------------------------------------
+// MAP
+//-------------------------------------
 
-var map = L.map('map');
+var map=L.map("map");
 
-
-//---------------------------
-// MapTiler Satellite
-//---------------------------
+//-------------------------------------
+// SATELLITE
+//-------------------------------------
 
 L.tileLayer(
-'https://api.maptiler.com/maps/satellite/{z}/{x}/{y}.jpg?key=VTyVRu9eUsVOXeBj5TqJ',
+"https://api.maptiler.com/maps/satellite/{z}/{x}/{y}.jpg?key=VTyVRu9eUsVOXeBj5TqJ",
 {
-    attribution:'© MapTiler © OpenStreetMap',
-    maxZoom:22
+maxZoom:22,
+attribution:"© MapTiler © OpenStreetMap"
 }).addTo(map);
 
 
-//---------------------------
-// Load KML
-//---------------------------
+//-------------------------------------
+// LOAD KML
+//-------------------------------------
 
-var kml = omnivore.kml(
-'https://raw.githubusercontent.com/hemanya2003/Skdas/main/SK_DAS_SIR_AREA_AREAS1.kml'
+var kml=omnivore.kml(
+"https://raw.githubusercontent.com/hemanya2003/Skdas/main/SK_DAS_SIR_AREA_AREAS1.kml"
 )
-.on('ready', function () {
+.on("ready",function(){
 
-    map.fitBounds(this.getBounds());
+map.fitBounds(this.getBounds());
 
-    this.eachLayer(function(layer){
+this.eachLayer(function(layer){
 
-        var p = layer.feature.properties;
+var desc="";
 
-        var village =
-            p.Vill_Name ||
-            p.Village ||
-            p.Name ||
-            p.name ||
-            "";
+if(layer.feature.properties.description)
+desc=layer.feature.properties.description;
 
-        var area =
-            p.AREA ||
-            p.Area ||
-            p.area ||
-            "";
+if(layer.feature.properties.Description)
+desc=layer.feature.properties.Description;
 
-        // If values are inside Description
-        if((village==="" || area==="") && p.description){
 
-            var d = p.description;
+//-------------------------------------
+// Extract AREA
+//-------------------------------------
 
-            var villageMatch = d.match(/Vill.?_?Name.*?<td>(.*?)<\/td>/i);
-            var areaMatch = d.match(/AREA.*?<td>(.*?)<\/td>/i);
+var area="Not Available";
 
-            if(villageMatch) village = villageMatch[1];
-            if(areaMatch) area = areaMatch[1];
-        }
+var areaMatch=desc.match(/AREA<\/B>\s*=\s*([^<]+)/i);
 
-        layer.setStyle({
-            color:"#ff0000",
-            weight:2,
-            fillColor:"#00ff00",
-            fillOpacity:0.35
-        });
+if(areaMatch)
+area=areaMatch[1].trim();
 
-        layer.bindPopup(
-        "<h3>Area Information</h3>" +
-        "<b>Village :</b> " + village +
-        "<br><b>Area :</b> " + area
-        );
 
-    });
+//-------------------------------------
+// Extract Village
+//-------------------------------------
+
+var village="Not Available";
+
+var villageMatch=desc.match(/Vill_Name<\/B>\s*=\s*([^<]+)/i);
+
+if(villageMatch)
+village=villageMatch[1].trim();
+
+
+//-------------------------------------
+// STYLE
+//-------------------------------------
+
+layer.setStyle({
+
+color:"#ff0000",
+weight:3,
+fill:false,
+fillOpacity:0
+
+});
+
+
+//-------------------------------------
+// POPUP
+//-------------------------------------
+
+layer.bindPopup(
+
+`
+<div style="width:260px;font-family:Arial">
+
+<h2 style="margin:0;color:#1565C0;">
+Area Information
+</h2>
+
+<hr>
+
+<table style="width:100%;font-size:15px">
+
+<tr>
+<td><b>Village</b></td>
+<td>${village}</td>
+</tr>
+
+<tr>
+<td><b>Area</b></td>
+<td>${area} Ha</td>
+</tr>
+
+</table>
+
+</div>
+
+`
+
+);
+
+});
 
 })
+
 .addTo(map);
 
 </script>
