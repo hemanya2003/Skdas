@@ -1,0 +1,42 @@
+
+<!DOCTYPE html>
+<html><head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>SK DAS Areas</title>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+<style>
+html,body,#map{height:100%;margin:0}
+.leaflet-popup-content{font:14px Arial}
+</style>
+</head><body>
+<div id="map"></div>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="https://unpkg.com/@tmcw/togeojson@5.8.1/dist/togeojson.umd.js"></script>
+<script>
+const map=L.map('map');
+L.tileLayer('https://api.maptiler.com/maps/satellite/{z}/{x}/{y}.jpg?key=VTyVRu9eUsVOXeBj5TqJ',{maxZoom:22}).addTo(map);
+fetch('https://raw.githubusercontent.com/hemanya2003/Skdas/main/SK_DAS_SIR_AREA_AREAS1.kml')
+.then(r=>r.text())
+.then(txt=>{
+ const xml=(new DOMParser()).parseFromString(txt,'text/xml');
+ const gj=togeojson.kml(xml);
+ const layer=L.geoJSON(gj,{
+   style:{color:'#ff0000',weight:3,fillOpacity:0},
+   onEachFeature:(f,l)=>{
+      const desc=(f.properties.description||f.properties.Description||'');
+      let area='Not Available',vill='Not Available';
+      const clean=desc.replace(/<br\s*\/?>/gi,'\n').replace(/<[^>]+>/g,'');
+      let m=clean.match(/AREA\s*=\s*([^\n]+)/i);
+      if(m) area=m[1].trim();
+      m=clean.match(/Vill_Name\s*=\s*([^\n]+)/i);
+      if(m) vill=m[1].trim();
+      l.bindPopup(`<b>Village:</b> ${vill}<br><b>Area:</b> ${area}`);
+      l.on('mouseover',()=>l.setStyle({color:'#00ffff'}));
+      l.on('mouseout',()=>layer.resetStyle(l));
+   }
+ }).addTo(map);
+ map.fitBounds(layer.getBounds());
+});
+</script>
+</body></html>
